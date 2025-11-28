@@ -6,9 +6,9 @@ The platform is built with a Streamlit dashboard for interactive analysis and us
 
 ## 📸 Dashboard Preview
 
-![](https://i.imgur.com/your-screenshot-link.png)
+![](https://drive.google.com/drive/u/1/folders/1xVpMevHLdZroGOinJRKSnh_0uwhcER7J)
 
-*(**Action Required:** Please replace the link above with a screenshot or GIF of your running `app.py` dashboard! This is the most important part of your README.)*
+
 
 ---
 
@@ -100,5 +100,6 @@ Follow these steps to set up and run the project locally.
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/your-username/your-repo-name.git](https://github.com/your-username/your-repo-name.git)
-cd your-repo-name
+git clone [https://github.com/rishiyadav-DA/DS-project]
+
+cd rishiyadav-DA/DS-project
