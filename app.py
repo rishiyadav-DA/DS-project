@@ -281,27 +281,42 @@ SIA = SentimentIntensityAnalyzer()
 
 
 # --- Caching Data & Model Loading ---
+MODEL_DIR = os.path.join(os.path.dirname(__file__), 'saved_models')
 @st.cache_resource
 def load_horizon_models(ticker, horizon_name):
     """Load models for a specific prediction horizon"""
     loaded = {"models": {}, "scaler": None, "features": None, "thresholds": None}
+
+    # Debug: Print what we are looking for (Visible in App logs)
+    # print(f"Searching for models in {MODEL_DIR} for {ticker}...")
 
     # Load individual models
     model_files = {
         'LightGBM': ('stock_model_lgb', joblib.load),
         'XGBoost': ('stock_model_xgb', joblib.load),
         'Random Forest': ('stock_model_rf', joblib.load),
-        'LSTM': ('stock_model_lstm', load_model)
+        'LSTM': ('stock_model_lstm', load_model) 
     }
 
     for model_name, (file_prefix, loader) in model_files.items():
         ext = '.h5' if model_name == 'LSTM' else '.pkl'
-        model_path = os.path.join(MODEL_DIR, f'{file_prefix}_{horizon_name}_{ticker}{ext}')
+        
+        # specific fix for Reliance vs RELIANCE.NS formatting if needed
+        # safe_ticker = ticker.replace('.NS', '') # Uncomment if your files don't have .NS
+        
+        model_filename = f'{file_prefix}_{horizon_name}_{ticker}{ext}'
+        model_path = os.path.join(MODEL_DIR, model_filename)
+        
         if os.path.exists(model_path):
             try:
                 loaded["models"][model_name] = loader(model_path)
             except Exception as e:
-                st.warning(f"Could not load '{model_name}' for {horizon_name}: {e}")
+                st.warning(f"⚠️ Error loading {model_name}: {e}")
+                # Detailed error in logs
+                print(f"Failed to load {model_path}: {e}")
+        else:
+            # Silent failure is bad for debugging. Let's log it.
+            print(f"❌ File not found: {model_path}")
 
     # Load scaler
     scaler_path = os.path.join(MODEL_DIR, f'scaler_{horizon_name}_{ticker}.pkl')
@@ -309,7 +324,7 @@ def load_horizon_models(ticker, horizon_name):
         try:
             loaded["scaler"] = joblib.load(scaler_path)
         except Exception as e:
-            st.warning(f"Could not load scaler for {horizon_name}: {e}")
+            st.warning(f"Could not load scaler: {e}")
 
     # Load feature names
     feature_path = os.path.join(MODEL_DIR, f'feature_names_{horizon_name}_{ticker}.pkl')
@@ -317,7 +332,7 @@ def load_horizon_models(ticker, horizon_name):
         try:
             loaded["features"] = joblib.load(feature_path)
         except Exception as e:
-            st.warning(f"Could not load features for {horizon_name}: {e}")
+            st.warning(f"Could not load features: {e}")
 
     # Load optimal thresholds
     threshold_path = os.path.join(MODEL_DIR, f'optimal_thresholds_{horizon_name}_{ticker}.pkl')
@@ -1097,6 +1112,7 @@ st.markdown(f"""
 </div>
 
 """, unsafe_allow_html=True)
+
 
 
 
