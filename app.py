@@ -332,11 +332,7 @@ def load_horizon_models(ticker, horizon_name):
 
 
 @st.cache_data(ttl=900)
-import streamlit as st
-import yfinance as yf
-import pandas as pd
-from datetime import datetime, timedelta
-import time
+
 
 @st.cache_data(ttl=3600)
 def get_live_stock_data(ticker, days_history=600):
@@ -1100,4 +1096,5 @@ st.markdown(f"""
 </div>
 
 """, unsafe_allow_html=True)
+
 
