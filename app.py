@@ -267,9 +267,12 @@ def add_enhanced_features(df):
 @st.cache_resource
 def download_vader():
     try:
-        nltk.data.find('sentiment/vader_lexicon.zip')
-    except (LookupError, nltk.downloader.DownloadError):
-        nltk.download('vader_lexicon', quiet=True)
+        nltk.data.find("sentiment/vader_lexicon.zip")
+    except LookupError:
+        nltk.download("vader_lexicon")
+
+# This line actually runs the download
+download_vader()
 
 
 download_vader()
@@ -1051,4 +1054,5 @@ st.markdown(f"""
     <p>Last Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} | Version 3.0</p>
     <p>Made with ❤️ for educational purposes | © 2024</p>
 </div>
+
 """, unsafe_allow_html=True)
