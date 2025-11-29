@@ -332,29 +332,73 @@ def load_horizon_models(ticker, horizon_name):
 
 
 @st.cache_data(ttl=900)
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+from datetime import datetime, timedelta
+import time
+
+@st.cache_data(ttl=3600)
 def get_live_stock_data(ticker, days_history=600):
-    """Fetches historical stock data from Yahoo Finance"""
+    """
+    Fetches historical stock data with robust error handling, retries,
+    and rate limiting for Streamlit Cloud.
+    """
+    # Calculate dates
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days_history)
-    try:
-        stock_df = yf.download(ticker, start=start_date, end=end_date, progress=False)
-        if stock_df.empty:
-            return pd.DataFrame()
+    
+    # Retry configuration
+    max_retries = 3
+    delay = 2  # Seconds to wait between retries
 
-        if isinstance(stock_df.columns, pd.MultiIndex):
-            stock_df.columns = stock_df.columns.get_level_values(0)
+    for attempt in range(max_retries):
+        try:
+            # --- 1. RATE LIMIT PROTECTION ---
+            # Pause before request to avoid "429 Too Many Requests"
+            time.sleep(1) 
 
-        stock_df.reset_index(inplace=True)
+            # --- 2. DOWNLOAD ---
+            # progress=False prevents log spam
+            stock_df = yf.download(ticker, start=start_date, end=end_date, progress=False)
 
-        for col in ['Open', 'High', 'Low', 'Close', 'Volume']:
-            if col in stock_df.columns:
-                stock_df[col] = pd.to_numeric(stock_df[col], errors='coerce')
+            # --- 3. VALIDATION ---
+            if stock_df.empty:
+                # If we get empty data, raise an error to trigger the retry logic
+                if attempt < max_retries - 1:
+                    raise ValueError("Received empty DataFrame")
+                else:
+                    return pd.DataFrame()
 
-        stock_df.dropna(subset=['Open', 'High', 'Low', 'Close', 'Volume'], inplace=True)
-        return stock_df
-    except Exception as e:
-        st.error(f"Failed to fetch stock data: {e}")
-        return pd.DataFrame()
+            # --- 4. DATA CLEANING (Preserving your original logic) ---
+            # Fix MultiIndex columns (Common issue in yfinance > 0.2.0)
+            if isinstance(stock_df.columns, pd.MultiIndex):
+                stock_df.columns = stock_df.columns.get_level_values(0)
+
+            stock_df.reset_index(inplace=True)
+
+            # Ensure numeric columns
+            numeric_cols = ['Open', 'High', 'Low', 'Close', 'Volume']
+            for col in numeric_cols:
+                if col in stock_df.columns:
+                    stock_df[col] = pd.to_numeric(stock_df[col], errors='coerce')
+
+            # Drop rows with missing values
+            cols_to_check = [c for c in numeric_cols if c in stock_df.columns]
+            stock_df.dropna(subset=cols_to_check, inplace=True)
+
+            return stock_df
+
+        except Exception as e:
+            # If this was the last attempt, show error and return empty
+            if attempt == max_retries - 1:
+                st.error(f"Failed to fetch stock data for {ticker}: {e}")
+                return pd.DataFrame()
+            
+            # Exponential backoff: Wait 2s, then 4s, then 6s...
+            time.sleep(delay * (attempt + 1))
+    
+    return pd.DataFrame()
 
 
 @st.cache_data(ttl=3600)
@@ -1056,3 +1100,4 @@ st.markdown(f"""
 </div>
 
 """, unsafe_allow_html=True)
+
