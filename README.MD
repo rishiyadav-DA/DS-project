@@ -99,11 +99,13 @@ Follow these steps to set up and run the project locally.
 
 ### 1. Clone the Repository
 
+Link to Demo:-
+https://rishiyadav-da-ds-project-app-cxjd8x.streamlit.app/
+
+
 ```bash
 git clone [https://github.com/rishiyadav-DA/DS-project]
 
 cd rishiyadav-DA/DS-project
-Link to Demo:-
-https://rishiyadav-da-ds-project-app-cxjd8x.streamlit.app/
 
 
